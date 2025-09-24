@@ -36,14 +36,12 @@ android {
 
     buildFeatures { compose = true }
 
-    // NOTE: With Kotlin 2.0+ and the compose plugin above,
-    // DO NOT set composeOptions.kotlinCompilerExtensionVersion.
-    // The plugin handles the compiler version.
+    // Compose compiler handled by the compose plugin; don't set extension version.
     packaging { resources.excludes += "/META-INF/{AL2.0,LGPL2.1}" }
 }
 
 dependencies {
-    // Compose BOM keeps all Compose libs aligned
+    // Compose BOM (single source of truth)
     implementation(platform("androidx.compose:compose-bom:2024.10.01"))
 
     // Compose UI
@@ -54,33 +52,26 @@ dependencies {
     implementation("androidx.compose.material3:material3:1.3.0")
     implementation("androidx.compose.runtime:runtime-saveable")
     implementation("androidx.compose.material:material-icons-extended")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
-    implementation(platform("androidx.compose:compose-bom:2024.09.00"))
-    implementation("androidx.compose.material:material-icons-extended")
-
-
 
     // Navigation
     implementation("androidx.navigation:navigation-compose:2.8.3")
 
-    // DataStore (Preferences)
+    // DataStore (Preferences) – optional for later persistence
     implementation("androidx.datastore:datastore-preferences:1.1.1")
 
-    // Kotlinx Serialization (runtime only; plugin not required unless you use @Serializable)
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
+    // Kotlin coroutines
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
 
     // Core / Lifecycle
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.6")
 
-    // Tests
+    // Tests / debug
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation(platform("androidx.compose:compose-bom:2024.10.01"))
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
-
-    // Debug tools
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 }

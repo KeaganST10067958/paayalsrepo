@@ -8,7 +8,6 @@ private fun newId(): String = System.currentTimeMillis().toString()
 
 class DataStoreRepository {
 
-    // flows renamed earlier to avoid getter clash
     private val _tasks = MutableStateFlow<List<Task>>(emptyList())
     val tasksFlow: StateFlow<List<Task>> = _tasks.asStateFlow()
 
@@ -18,60 +17,40 @@ class DataStoreRepository {
     private val _notes = MutableStateFlow<List<StickyNote>>(emptyList())
     val notesFlow: StateFlow<List<StickyNote>> = _notes.asStateFlow()
 
-    // Convenience getters (return the same flows)
-    fun getTasks(): StateFlow<List<Task>> = tasksFlow
-    fun getEvents(): StateFlow<List<EventItem>> = eventsFlow
-    fun getNotes(): StateFlow<List<StickyNote>> = notesFlow
+    fun getTasks() = tasksFlow
+    fun getEvents() = eventsFlow
+    fun getNotes() = notesFlow
 
     // ---- TASKS ----
-    fun addTask(title: String) {
-        val task = Task(
-            id = newId(),       // <-- String id
-            title = title,
-            done = false
-        )
+    fun addTask(title: String, tag: String? = null, done: Boolean = false) {
+        val task = Task(id = newId(), title = title, done = done, tag = tag)
         _tasks.value = _tasks.value + task
     }
-
-    fun toggleTask(id: String) {       // <-- String param
-        _tasks.value = _tasks.value.map { t ->
-            if (t.id == id) t.copy(done = !t.done) else t
-        }
+    fun toggleTask(id: String) {
+        _tasks.value = _tasks.value.map { if (it.id == id) it.copy(done = !it.done) else it }
     }
-
-    fun deleteTask(id: String) {       // <-- String param
+    fun deleteTask(id: String) {
         _tasks.value = _tasks.value.filter { it.id != id }
     }
 
     // ---- EVENTS ----
-    fun addEvent(title: String, start: Long, end: Long) {
-        val event = EventItem(
-            id = newId(),       // <-- String id
-            title = title,
-            start = start,
-            end = end
-        )
+    fun addEvent(title: String, start: Long, end: Long, type: String = "study") {
+        val event = EventItem(id = newId(), title = title, start = start, end = end, type = type)
         _events.value = _events.value + event
     }
 
     // ---- NOTES ----
     fun addNote(title: String, text: String, color: Long) {
-        val note = StickyNote(
-            id = newId(),       // <-- String id
-            title = title,
-            text = text,
-            color = color
-        )
+        val note = StickyNote(id = newId(), title = title, text = text, color = color)
         _notes.value = _notes.value + note
     }
-
-    fun deleteNote(id: String) {       // <-- String param
+    fun deleteNote(id: String) {
         _notes.value = _notes.value.filter { it.id != id }
     }
-
-    fun recolorNote(id: String, color: Long) {  // <-- String param
-        _notes.value = _notes.value.map { n ->
-            if (n.id == id) n.copy(color = color) else n
-        }
+    fun recolorNote(id: String, color: Long) {
+        _notes.value = _notes.value.map { if (it.id == id) it.copy(color = color) else it }
+    }
+    fun togglePin(id: String) {
+        _notes.value = _notes.value.map { if (it.id == id) it.copy(pinned = !it.pinned) else it }
     }
 }
