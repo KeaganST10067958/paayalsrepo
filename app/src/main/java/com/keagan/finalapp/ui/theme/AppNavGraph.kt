@@ -46,23 +46,25 @@ fun AppNavGraph(repo: Repo, startDestination: String = Routes.Splash) {
 
         // MAIN TABS
         composable(Routes.Dashboard) {
-            val backStack by navController.currentBackStackEntryAsState()
             Scaffold(
                 bottomBar = {
-                    AppBottomBar(backStack?.destination?.route) { route ->
-                        navController.navigate(route) { launchSingleTop = true }
-                    }
+                    AppBottomBar(
+                        currentRoute = Routes.Dashboard,
+                        onNavigate = { r -> navController.navigate(r) { launchSingleTop = true } }
+                    )
                 }
             ) { pad ->
                 DashboardScreen(
-                    repo = repo,
                     displayName = "Keagan",
-                    onNavSelect = { navController.navigate(it) },
-                    onProfile = { navController.navigate(Routes.Profile) },
-                    modifier = Modifier.padding(pad)
+                    modifier = Modifier.padding(pad),
+                    onOpenTodo = { navController.navigate(Routes.Todo) },
+                    onOpenCalendar = { navController.navigate(Routes.Calendar) },
+                    onOpenNotes = { navController.navigate(Routes.Notes) }
                 )
             }
         }
+
+
 
         composable(Routes.Todo) {
             Scaffold(bottomBar = {

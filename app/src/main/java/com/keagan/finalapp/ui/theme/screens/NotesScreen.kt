@@ -10,119 +10,114 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.keagan.finalapp.data.Repo
-import com.keagan.finalapp.data.StickyNote
-import com.keagan.finalapp.ui.theme.*
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NotesScreen(repo: Repo, modifier: Modifier = Modifier) {
-    val all = repo.notes.collectAsState(initial = emptyList()).value
     var tab by remember { mutableStateOf(0) } // 0 All, 1 Pinned
-    var query by remember { mutableStateOf("") }
     var showAdd by remember { mutableStateOf(false) }
-
-    val notes = all.filter { (tab==0 || it.pinned) && (query.isBlank() || it.title.contains(query, true) || it.text.contains(query, true)) }
-
-    Column(modifier.fillMaxSize().padding(16.dp)) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text("Notes", style = MaterialTheme.typography.headlineSmall)
-            Button(onClick = { showAdd = true }) { Text("+ Note") }
-        }
-        Spacer(Modifier.height(10.dp))
-        OutlinedTextField(value = query, onValueChange = { query = it }, placeholder = { Text("Search notes...") }, modifier = Modifier.fillMaxWidth())
-        Spacer(Modifier.height(10.dp))
-        SingleChoiceSegmentedButtonRow {
-            SegmentedButton(selected = tab==0, onClick = { tab=0 }, shape = SegmentedButtonDefaults.itemShape(0,2), label = { Text("All") })
-            SegmentedButton(selected = tab==1, onClick = { tab=1 }, shape = SegmentedButtonDefaults.itemShape(1,2), label = { Text("Pinned") })
-        }
-        Spacer(Modifier.height(12.dp))
-
-        LazyVerticalGrid(columns = GridCells.Adaptive(minSize = 160.dp), verticalArrangement = Arrangement.spacedBy(12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxSize()) {
-            items(notes, key = { it.id }) { n -> NoteCard(n, onPin = { repo.togglePin(n.id) }, onDelete = { repo.deleteNote(n.id) }) }
-        }
-    }
-
-    if (showAdd) AddNoteSheet(onDismiss = { showAdd = false }) { title, text, color ->
-        repo.addNote(title, text, color); showAdd = false
-    }
-}
-
-@Composable
-private fun NoteCard(n: StickyNote, onPin: () -> Unit, onDelete: () -> Unit) {
-    val bg = colorFromLong(n.color)
-    Card(colors = CardDefaults.cardColors(containerColor = bg)) {
-        Column(Modifier.padding(16.dp)) {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(n.title, style = MaterialTheme.typography.titleMedium, color = readableOn(bg))
-                Row {
-                    TextButton(onClick = onPin) { Text(if (n.pinned) "Unpin" else "Pin") }
-                    TextButton(onClick = onDelete) { Text("Del") }
-                }
-            }
-            Spacer(Modifier.height(6.dp))
-            Text(n.text, color = readableOn(bg))
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun AddNoteSheet(onDismiss: () -> Unit, onSave: (String, String, Long) -> Unit) {
     var title by remember { mutableStateOf("") }
     var text by remember { mutableStateOf("") }
-    var color by remember { mutableStateOf(0xFFFFE0E0L) } // Peach default
+    var color by remember { mutableStateOf(0xFFFFF59DL) } // light yellow
 
-    ModalBottomSheet(onDismissRequest = onDismiss) {
-        Column(Modifier.padding(16.dp)) {
-            Text("Add Note", style = MaterialTheme.typography.titleLarge)
-            Spacer(Modifier.height(8.dp))
-            OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text("Title") }, modifier = Modifier.fillMaxWidth())
-            Spacer(Modifier.height(8.dp))
-            OutlinedTextField(value = text, onValueChange = { text = it }, label = { Text("Text") }, modifier = Modifier.fillMaxWidth())
-            Spacer(Modifier.height(8.dp))
-            Text("Colour")
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                ColorChip("Peach", Peach) { color = 0xFFFFE0E0L }
-                ColorChip("Mint", Mint) { color = 0xFFDFF3E6L }
-                ColorChip("Blue", Blue) { color = 0xFFE0ECFFL } // corrected below
-                ColorChip("Lav", Lavender) { color = 0xFFE7E0FFL }
-                ColorChip("Lemon", Lemon) { color = 0xFFFFF5CCL }
+    Scaffold(modifier = modifier) { pad ->
+        Column(
+            Modifier
+                .fillMaxSize()
+                .padding(pad)
+                .padding(16.dp)
+        ) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text("Notes", style = MaterialTheme.typography.headlineSmall)
+                Button(onClick = { showAdd = true }) { Text("+ Note") }
             }
             Spacer(Modifier.height(12.dp))
-            Card(colors = CardDefaults.cardColors(containerColor = colorFromLong(color))) {
-                Column(Modifier.padding(12.dp)) {
-                    Text(if (title.isBlank()) "Untitled" else title)
-                    Text(if (text.isBlank()) "Type your note..." else text)
+
+            SingleChoiceSegmentedButtonRow {
+                listOf("All", "Pinned").forEachIndexed { i, label ->
+                    SegmentedButton(
+                        selected = tab == i,
+                        onClick = { tab = i },
+                        shape = SegmentedButtonDefaults.itemShape(i, 2),
+                        label = { Text(label) }
+                    )
                 }
             }
             Spacer(Modifier.height(12.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                TextButton(onClick = onDismiss) { Text("Cancel") }
-                Button(onClick = { if (title.isNotBlank()) onSave(title.trim(), text.trim(), color) }) { Text("Save") }
+
+            val notes = repo.notes.collectAsState(initial = emptyList()).value
+            val filtered = if (tab == 1) notes.filter { it.pinned } else notes
+
+            if (filtered.isEmpty()) {
+                Spacer(Modifier.height(24.dp))
+                Text("No notes yet.", color = MaterialTheme.colorScheme.onSurface.copy(.6f))
+            } else {
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(2),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    items(filtered, key = { it.id }) { n ->
+                        val bg = colorFromLong(n.color)
+                        Card(
+                            colors = CardDefaults.cardColors(containerColor = bg),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                        ) {
+                            Column(Modifier.padding(16.dp)) {
+                                Text(n.title, style = MaterialTheme.typography.titleMedium, color = readableOn(bg))
+                                Spacer(Modifier.height(6.dp))
+                                Text(n.text, style = MaterialTheme.typography.bodyMedium, color = readableOn(bg))
+                                Spacer(Modifier.height(8.dp))
+                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    TextButton(onClick = { repo.deleteNote(n.id) }) { Text("Delete") }
+                                }
+                            }
+                        }
+                    }
+                }
             }
-            Spacer(Modifier.height(8.dp))
         }
     }
-}
 
-@Composable
-private fun ColorChip(label: String, swatch: Color, onPick: () -> Unit) {
-    FilterChip(
-        selected = false,
-        onClick = onPick,
-        label = { Text(label) },
-        leadingIcon = {
-            Box(
-                modifier = Modifier
-                    .size(14.dp)
-                    .background(swatch, CircleShape)
-            )
-        }
-    )
+    if (showAdd) {
+        AlertDialog(
+            onDismissRequest = { showAdd = false },
+            title = { Text("Add Note") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text("Title") })
+                    OutlinedTextField(value = text, onValueChange = { text = it }, label = { Text("Text") })
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        listOf(
+                            0xFFFFF59DL, // Peach-ish
+                            0xFFC8E6C9L, // Mint
+                            0xFFBBDEFB, // Blue
+                            0xFFE1BEE7, // Lavender
+                            0xFFFFF9C4 // Lemon
+                        ).forEach { c ->
+                            AssistChip(
+                                onClick = { color = c.toLong() },
+                                label = { Text(" ") },
+                                colors = AssistChipDefaults.assistChipColors(
+                                    containerColor = colorFromLong(c.toLong())
+                                )
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    if (title.isNotBlank() || text.isNotBlank()) {
+                        repo.addNote(title.trim().ifBlank { "Untitled" }, text.trim(), color)
+                    }
+                    title = ""; text = ""; color = 0xFFFFF59DL; showAdd = false
+                }) { Text("Save") }
+            },
+            dismissButton = { TextButton(onClick = { showAdd = false }) { Text("Cancel") } }
+        )
+    }
 }
 
 private fun colorFromLong(argb: Long): Color {
