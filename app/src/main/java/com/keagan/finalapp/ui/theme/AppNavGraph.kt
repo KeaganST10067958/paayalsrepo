@@ -1,22 +1,34 @@
 package com.keagan.finalapp.ui.theme
 
-import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.navigation.compose.*
-import com.keagan.finalapp.data.Repo
+import androidx.compose.ui.Modifier
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
+import com.keagan.finalapp.ui.theme.components.AppBottomBar
+import com.keagan.finalapp.ui.theme.components.Routes
 import com.keagan.finalapp.ui.theme.screens.*
 
 @Composable
-fun AppNavGraph(repo: Repo, startDestination: String = Routes.Splash) {
+fun AppNavGraph(
+    startDestination: String = Routes.Splash
+) {
     val navController = rememberNavController()
 
-    NavHost(navController, startDestination) {
+    NavHost(navController = navController, startDestination = startDestination) {
 
         composable(Routes.Splash) {
-            SplashScreen { navController.navigate(Routes.AfterSplash) { popUpTo(Routes.Splash) { inclusive = true } } }
+            SplashScreen(
+                onDone = {
+                    navController.navigate(Routes.AfterSplash) {
+                        popUpTo(Routes.Splash) { inclusive = true }
+                    }
+                }
+            )
         }
 
         composable(Routes.AfterSplash) {
@@ -30,7 +42,9 @@ fun AppNavGraph(repo: Repo, startDestination: String = Routes.Splash) {
             LoginScreen(
                 onBack = { navController.popBackStack() },
                 onSuccess = {
-                    navController.navigate(Routes.Dashboard) { popUpTo(Routes.AfterSplash) { inclusive = true } }
+                    navController.navigate(Routes.Dashboard) {
+                        popUpTo(Routes.AfterSplash) { inclusive = true }
+                    }
                 }
             )
         }
@@ -39,60 +53,80 @@ fun AppNavGraph(repo: Repo, startDestination: String = Routes.Splash) {
             SignUpScreen(
                 onBack = { navController.popBackStack() },
                 onSuccess = {
-                    navController.navigate(Routes.Dashboard) { popUpTo(Routes.AfterSplash) { inclusive = true } }
+                    navController.navigate(Routes.Dashboard) {
+                        popUpTo(Routes.AfterSplash) { inclusive = true }
+                    }
                 }
             )
         }
 
-        // MAIN TABS
+        // ----- MAIN TABS -----
         composable(Routes.Dashboard) {
             val backStack by navController.currentBackStackEntryAsState()
             Scaffold(
                 bottomBar = {
-                    AppBottomBar(backStack?.destination?.route) { route ->
-                        navController.navigate(route) { launchSingleTop = true }
-                    }
+                    AppBottomBar(
+                        currentRoute = backStack?.destination?.route,
+                        onNavigate = { route ->
+                            navController.navigate(route) { launchSingleTop = true }
+                        }
+                    )
                 }
             ) { pad ->
                 DashboardScreen(
-                    repo = repo,
+                    modifier = Modifier.padding(pad),
                     displayName = "Keagan",
-                    onNavSelect = { navController.navigate(it) },
-                    onProfile = { navController.navigate(Routes.Profile) },
-                    modifier = Modifier.padding(pad)
+                    onOpenTodo = { navController.navigate(Routes.Todo) },
+                    onOpenCalendar = { navController.navigate(Routes.Calendar) },
+                    onOpenNotes = { navController.navigate(Routes.Notes) }
                 )
             }
         }
 
         composable(Routes.Todo) {
             Scaffold(bottomBar = {
-                AppBottomBar(Routes.Todo) { route -> navController.navigate(route) { launchSingleTop = true } }
+                AppBottomBar(
+                    currentRoute = Routes.Todo,
+                    onNavigate = { route -> navController.navigate(route) { launchSingleTop = true } }
+                )
             }) { pad ->
-                TodoScreen(repo = repo, modifier = Modifier.padding(pad))
+                TodoScreen(modifier = Modifier.padding(pad))
             }
         }
 
         composable(Routes.Calendar) {
             Scaffold(bottomBar = {
-                AppBottomBar(Routes.Calendar) { route -> navController.navigate(route) { launchSingleTop = true } }
+                AppBottomBar(
+                    currentRoute = Routes.Calendar,
+                    onNavigate = { route -> navController.navigate(route) { launchSingleTop = true } }
+                )
             }) { pad ->
-                CalendarScreen(repo = repo, modifier = Modifier.padding(pad))
+                CalendarScreen(modifier = Modifier.padding(pad))
             }
         }
 
         composable(Routes.Notes) {
             Scaffold(bottomBar = {
-                AppBottomBar(Routes.Notes) { route -> navController.navigate(route) { launchSingleTop = true } }
+                AppBottomBar(
+                    currentRoute = Routes.Notes,
+                    onNavigate = { route -> navController.navigate(route) { launchSingleTop = true } }
+                )
             }) { pad ->
-                NotesScreen(repo = repo, modifier = Modifier.padding(pad))
+                NotesScreen(modifier = Modifier.padding(pad))
             }
         }
 
         composable(Routes.Profile) {
             Scaffold(bottomBar = {
-                AppBottomBar(Routes.Profile) { route -> navController.navigate(route) { launchSingleTop = true } }
+                AppBottomBar(
+                    currentRoute = Routes.Profile,
+                    onNavigate = { route -> navController.navigate(route) { launchSingleTop = true } }
+                )
             }) { pad ->
-                ProfileScreen(onBack = { navController.navigate(Routes.Dashboard) }, modifier = Modifier.padding(pad))
+                ProfileScreen(
+                    onBack = { navController.navigate(Routes.Dashboard) },
+                    modifier = Modifier.padding(pad)
+                )
             }
         }
     }
